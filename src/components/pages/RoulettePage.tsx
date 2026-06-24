@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { performSpin } from "@/lib/spin.functions";
+import { performSpin, getPendingSpin, acknowledgePendingSpin } from "@/lib/spin.functions";
 import { Roulette, CategoryLegend } from "@/components/Roulette";
 import { ResultModal } from "@/components/ResultModal";
 import { AppNav } from "@/components/AppNav";
@@ -13,8 +13,13 @@ export function RoulettePage() {
   const [spinning, setSpinning] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [requesting, setRequesting] = useState(false);
+  const [pendingNotice, setPendingNotice] = useState(false);
 
   const spinFn = useServerFn(performSpin);
+  const getPendingFn = useServerFn(getPendingSpin);
+  const ackPendingFn = useServerFn(acknowledgePendingSpin);
+  const hasPendingRef = useRef(false);
 
   const { data: pool = [] } = useQuery<Item[]>({
     queryKey: ["items", "active"],
@@ -26,19 +31,65 @@ export function RoulettePage() {
     },
   });
 
+  // Restore pending result on mount (e.g. after navigation away)
+  useEffect(() => {
+    let cancelled = false;
+    void getPendingFn().then((res) => {
+      if (cancelled) return;
+      if (res.spin) {
+        setWinner(res.spin.item);
+        setModalOpen(true);
+        hasPendingRef.current = true;
+        setPendingNotice(true);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [getPendingFn]);
+
+  // Warn before leaving when a result is pending
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasPendingRef.current || spinning) {
+        e.preventDefault();
+        e.returnValue = "Tenés un resultado pendiente de visualizar.";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [spinning]);
+
   async function handleSpin() {
-    if (spinning || pool.length === 0) return;
+    if (spinning || requesting || pool.length === 0) return;
     setError(null);
+    setRequesting(true);
     setModalOpen(false);
     setWinner(null);
     try {
       const result = await spinFn();
       setWinner(result.item as Item);
       setSpinning(true);
+      hasPendingRef.current = true;
+      setPendingNotice(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al girar");
+    } finally {
+      setRequesting(false);
     }
   }
+
+  async function handleClose() {
+    setModalOpen(false);
+    hasPendingRef.current = false;
+    setPendingNotice(false);
+    try { await ackPendingFn(); } catch {}
+  }
+
+  const buttonLabel = requesting
+    ? "Solicitando…"
+    : spinning
+      ? "Girando…"
+      : "Girar";
 
   return (
     <>
@@ -52,6 +103,15 @@ export function RoulettePage() {
             Beneficios · Castigos · Sin piedad
           </p>
         </header>
+
+        {pendingNotice && (
+          <div role="status" className="mb-4 surface-premium border border-gold/40 rounded-xl px-4 py-3 text-sm text-gold">
+            Tenés un resultado pendiente de visualizar.{" "}
+            <button onClick={() => setModalOpen(true)} className="underline font-semibold">
+              Ver resultado
+            </button>
+          </div>
+        )}
 
         {pool.length === 0 ? (
           <div className="surface-premium rounded-2xl p-10 text-center text-muted-foreground">
@@ -71,16 +131,17 @@ export function RoulettePage() {
         <div className="mt-8 flex flex-col items-center gap-3">
           <button
             onClick={handleSpin}
-            disabled={spinning || pool.length === 0}
+            disabled={spinning || requesting || pool.length === 0}
+            aria-busy={spinning || requesting}
             className="px-12 py-4 rounded-xl font-display text-xl font-bold uppercase tracking-[0.3em] bg-gradient-to-b from-[oklch(0.86_0.18_85)] to-[oklch(0.62_0.16_75)] text-gold-foreground glow-gold disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.03] active:scale-[0.98] transition-transform"
           >
-            {spinning ? "Girando…" : "Girar"}
+            {buttonLabel}
           </button>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         </div>
       </main>
 
-      <ResultModal item={winner} open={modalOpen} onClose={() => setModalOpen(false)} />
+      <ResultModal item={winner} open={modalOpen} onClose={handleClose} />
     </>
   );
 }

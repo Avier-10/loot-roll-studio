@@ -10,6 +10,7 @@ export function AppNav() {
     { to: "/moderation", label: "Moderación", show: hasRole("moderator") || hasRole("admin") },
     { to: "/history", label: "Historial", show: hasRole("streamer") || hasRole("admin") },
     { to: "/admin", label: "Admin", show: hasRole("admin") },
+    { to: "/admin/users", label: "Usuarios", show: hasRole("admin") },
   ];
 
   return (
