@@ -10,15 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
+import { Route as TrashRouteImport } from './routes/trash'
 import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrashRoute = TrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ModerationRoute = ModerationRouteImport.update({
@@ -36,6 +43,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -50,49 +62,75 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/audit': typeof AuditRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/moderation': typeof ModerationRoute
+  '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/audit': typeof AuditRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/moderation': typeof ModerationRoute
+  '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/audit': typeof AuditRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/moderation': typeof ModerationRoute
+  '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/auth' | '/history' | '/moderation' | '/users'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/audit'
+    | '/auth'
+    | '/history'
+    | '/moderation'
+    | '/trash'
+    | '/users'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/auth' | '/history' | '/moderation' | '/users'
+  to:
+    | '/'
+    | '/admin'
+    | '/audit'
+    | '/auth'
+    | '/history'
+    | '/moderation'
+    | '/trash'
+    | '/users'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/audit'
     | '/auth'
     | '/history'
     | '/moderation'
+    | '/trash'
     | '/users'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AuditRoute: typeof AuditRoute
   AuthRoute: typeof AuthRoute
   HistoryRoute: typeof HistoryRoute
   ModerationRoute: typeof ModerationRoute
+  TrashRoute: typeof TrashRoute
   UsersRoute: typeof UsersRoute
 }
 
@@ -103,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users'
       preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trash': {
+      id: '/trash'
+      path: '/trash'
+      fullPath: '/trash'
+      preLoaderRoute: typeof TrashRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/moderation': {
@@ -126,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -146,9 +198,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AuditRoute: AuditRoute,
   AuthRoute: AuthRoute,
   HistoryRoute: HistoryRoute,
   ModerationRoute: ModerationRoute,
+  TrashRoute: TrashRoute,
   UsersRoute: UsersRoute,
 }
 export const routeTree = rootRouteImport
