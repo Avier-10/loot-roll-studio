@@ -14,16 +14,239 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          category: Database["public"]["Enums"]["item_category"]
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          is_active: boolean
+          suggested_at: string | null
+          suggested_by_username: string | null
+          title: string
+          type: Database["public"]["Enums"]["item_type"]
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["item_category"]
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          is_active?: boolean
+          suggested_at?: string | null
+          suggested_by_username?: string | null
+          title: string
+          type: Database["public"]["Enums"]["item_type"]
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["item_category"]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          suggested_at?: string | null
+          suggested_by_username?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["item_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pending_submissions: {
+        Row: {
+          approved_item_id: string | null
+          created_at: string
+          id: string
+          kick_username: string
+          proposed_category: Database["public"]["Enums"]["item_category"] | null
+          proposed_description: string | null
+          proposed_title: string | null
+          proposed_type: Database["public"]["Enums"]["item_type"] | null
+          raw_message: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+        }
+        Insert: {
+          approved_item_id?: string | null
+          created_at?: string
+          id?: string
+          kick_username: string
+          proposed_category?:
+            | Database["public"]["Enums"]["item_category"]
+            | null
+          proposed_description?: string | null
+          proposed_title?: string | null
+          proposed_type?: Database["public"]["Enums"]["item_type"] | null
+          raw_message: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+        }
+        Update: {
+          approved_item_id?: string | null
+          created_at?: string
+          id?: string
+          kick_username?: string
+          proposed_category?:
+            | Database["public"]["Enums"]["item_category"]
+            | null
+          proposed_description?: string | null
+          proposed_title?: string | null
+          proposed_type?: Database["public"]["Enums"]["item_type"] | null
+          raw_message?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_submissions_approved_item_id_fkey"
+            columns: ["approved_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          is_active?: boolean
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      spins: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string | null
+          item_snapshot: Json
+          spun_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_snapshot: Json
+          spun_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_snapshot?: Json
+          spun_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spins_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "streamer" | "moderator"
+      item_category:
+        | "bueno"
+        | "muy_bueno"
+        | "excelente"
+        | "leve"
+        | "medio"
+        | "fuerte"
+      item_type: "beneficio" | "castigo"
+      submission_status: "pendiente" | "aprobado" | "rechazado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +373,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "streamer", "moderator"],
+      item_category: [
+        "bueno",
+        "muy_bueno",
+        "excelente",
+        "leve",
+        "medio",
+        "fuerte",
+      ],
+      item_type: ["beneficio", "castigo"],
+      submission_status: ["pendiente", "aprobado", "rechazado"],
+    },
   },
 } as const
