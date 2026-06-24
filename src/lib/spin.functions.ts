@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { PROBABILITIES } from "@/config/probabilities";
+import { PROBABILITIES, type CategoryConfig } from "@/config/probabilities";
 import type { Item } from "./types";
 
 /**
@@ -45,11 +45,16 @@ export const performSpin = createServerFn({ method: "POST" })
     }
 
     try {
-      // 3b. Weighted pick of category (server-side RNG)
-      const total = PROBABILITIES.reduce((s, p) => s + p.weight, 0);
+      // 3b. Load active probabilities (DB version, fallback to defaults)
+      const { data: latestVer } = await supabaseAdmin
+        .from("probability_versions")
+        .select("config")
+        .order("version", { ascending: false }).limit(1).maybeSingle();
+      const probs: CategoryConfig[] = (latestVer?.config as CategoryConfig[]) ?? PROBABILITIES;
+      const total = probs.reduce((s, p) => s + p.weight, 0) || 1;
       let r = Math.random() * total;
-      let chosen = PROBABILITIES[0];
-      for (const p of PROBABILITIES) {
+      let chosen = probs[0];
+      for (const p of probs) {
         if (r < p.weight) { chosen = p; break; }
         r -= p.weight;
       }
