@@ -30,7 +30,7 @@ async function audit(
     _action: action,
     _target_type: targetType,
     _target_table: targetTable,
-    _target_id: targetId,
+    _target_id: targetId as any,
     _old: (oldValue ?? null) as any,
     _new: (newValue ?? null) as any,
     _metadata: metadata as any,
