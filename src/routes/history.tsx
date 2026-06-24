@@ -19,7 +19,7 @@ function HistoryPage() {
   useEffect(() => {
     if (!user) return;
     void supabase.from("spins").select("id, created_at, item_snapshot").order("created_at", { ascending: false }).limit(100)
-      .then(({ data }) => setRows((data ?? []) as SpinRow[]));
+      .then(({ data }) => setRows(((data ?? []) as unknown) as SpinRow[]));
   }, [user]);
 
   if (loading) return <div className="p-10 text-center text-muted-foreground">Cargando…</div>;
