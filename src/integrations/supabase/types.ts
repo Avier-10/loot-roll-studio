@@ -21,8 +21,11 @@ export type Database = {
           created_at: string
           id: string
           metadata: Json | null
+          new_value: Json | null
+          old_value: Json | null
           target_id: string | null
           target_table: string | null
+          target_type: string | null
         }
         Insert: {
           action: string
@@ -30,8 +33,11 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
           target_id?: string | null
           target_table?: string | null
+          target_type?: string | null
         }
         Update: {
           action?: string
@@ -39,8 +45,11 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
           target_id?: string | null
           target_table?: string | null
+          target_type?: string | null
         }
         Relationships: []
       }
@@ -49,6 +58,8 @@ export type Database = {
           category: Database["public"]["Enums"]["item_category"]
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           id: string
           is_active: boolean
@@ -62,6 +73,8 @@ export type Database = {
           category: Database["public"]["Enums"]["item_category"]
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description: string
           id?: string
           is_active?: boolean
@@ -75,6 +88,8 @@ export type Database = {
           category?: Database["public"]["Enums"]["item_category"]
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           id?: string
           is_active?: boolean
@@ -90,6 +105,8 @@ export type Database = {
         Row: {
           approved_item_id: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           kick_username: string
           proposed_category: Database["public"]["Enums"]["item_category"] | null
@@ -104,6 +121,8 @@ export type Database = {
         Insert: {
           approved_item_id?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           kick_username: string
           proposed_category?:
@@ -120,6 +139,8 @@ export type Database = {
         Update: {
           approved_item_id?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           kick_username?: string
           proposed_category?:
@@ -263,6 +284,19 @@ export type Database = {
       release_spin_lock: {
         Args: { _pending_spin_id: string; _uid: string }
         Returns: undefined
+      }
+      write_audit: {
+        Args: {
+          _action: string
+          _actor: string
+          _metadata: Json
+          _new: Json
+          _old: Json
+          _target_id: string
+          _target_table: string
+          _target_type: string
+        }
+        Returns: string
       }
     }
     Enums: {
