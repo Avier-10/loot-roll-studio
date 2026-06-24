@@ -145,26 +145,38 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: Database["public"]["Enums"]["account_status"]
+          active_spin_id: string | null
+          active_spin_started_at: string | null
           created_at: string
           display_name: string | null
           id: string
           is_active: boolean
+          pending_spin_id: string | null
           updated_at: string
           username: string
         }
         Insert: {
+          account_status?: Database["public"]["Enums"]["account_status"]
+          active_spin_id?: string | null
+          active_spin_started_at?: string | null
           created_at?: string
           display_name?: string | null
           id: string
           is_active?: boolean
+          pending_spin_id?: string | null
           updated_at?: string
           username: string
         }
         Update: {
+          account_status?: Database["public"]["Enums"]["account_status"]
+          active_spin_id?: string | null
+          active_spin_started_at?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
           is_active?: boolean
+          pending_spin_id?: string | null
           updated_at?: string
           username?: string
         }
@@ -177,6 +189,7 @@ export type Database = {
           item_id: string | null
           item_snapshot: Json
           spun_by: string | null
+          viewed_at: string | null
         }
         Insert: {
           created_at?: string
@@ -184,6 +197,7 @@ export type Database = {
           item_id?: string | null
           item_snapshot: Json
           spun_by?: string | null
+          viewed_at?: string | null
         }
         Update: {
           created_at?: string
@@ -191,6 +205,7 @@ export type Database = {
           item_id?: string | null
           item_snapshot?: Json
           spun_by?: string | null
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -228,6 +243,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_spin_lock: {
+        Args: { _spin_id: string; _uid: string }
+        Returns: boolean
+      }
+      clear_pending_spin: { Args: { _uid: string }; Returns: undefined }
+      get_account_status: {
+        Args: { _uid: string }
+        Returns: Database["public"]["Enums"]["account_status"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -235,8 +259,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_active: { Args: { _uid: string }; Returns: boolean }
+      release_spin_lock: {
+        Args: { _pending_spin_id: string; _uid: string }
+        Returns: undefined
+      }
     }
     Enums: {
+      account_status: "pendiente" | "activo" | "suspendido" | "deshabilitado"
       app_role: "admin" | "streamer" | "moderator"
       item_category:
         | "bueno"
@@ -374,6 +404,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: ["pendiente", "activo", "suspendido", "deshabilitado"],
       app_role: ["admin", "streamer", "moderator"],
       item_category: [
         "bueno",
