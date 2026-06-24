@@ -75,7 +75,9 @@ function ItemsManager() {
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    const { data } = await supabase.from("items").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase
+      .from("items").select("*")
+      .order("created_at", { ascending: false });
     setItems((data ?? []) as Item[]);
   }
   useEffect(() => { void load(); }, []);
@@ -90,25 +92,34 @@ function ItemsManager() {
     setError(null);
     const parsed = itemSchema.safeParse(form);
     if (!parsed.success) { setError(parsed.error.errors[0].message); return; }
-    if (editing) {
-      const { error: err } = await supabase.from("items").update(parsed.data).eq("id", editing.id);
-      if (err) { setError(err.message); return; }
-      setEditing(null);
-    } else {
-      const { error: err } = await supabase.from("items").insert({ ...parsed.data, created_by: user?.id });
-      if (err) { setError(err.message); return; }
+    try {
+      const { createItem, updateItem } = await import("@/lib/items.functions");
+      if (editing) {
+        await updateItem({ data: { id: editing.id, ...parsed.data } });
+        setEditing(null);
+      } else {
+        await createItem({ data: parsed.data });
+      }
+      setForm({ type: "beneficio", category: "bueno", title: "", description: "" });
+      void load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error");
     }
-    setForm({ type: "beneficio", category: "bueno", title: "", description: "" });
-    void load();
   }
 
   async function onDelete(id: string) {
-    if (!confirm("¿Eliminar este elemento?")) return;
-    await supabase.from("items").delete().eq("id", id);
+    if (!confirm("¿Mover este elemento a la papelera?")) return;
+    const { softDeleteItem } = await import("@/lib/items.functions");
+    try { await softDeleteItem({ data: { id } }); } catch (e) {
+      setError(e instanceof Error ? e.message : "Error"); return;
+    }
     void load();
   }
   async function toggleActive(it: Item) {
-    await supabase.from("items").update({ is_active: !it.is_active }).eq("id", it.id);
+    const { updateItem } = await import("@/lib/items.functions");
+    try { await updateItem({ data: { id: it.id, is_active: !it.is_active } }); } catch (e) {
+      setError(e instanceof Error ? e.message : "Error"); return;
+    }
     void load();
   }
   function startEdit(it: Item) {

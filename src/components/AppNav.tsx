@@ -9,8 +9,10 @@ export function AppNav() {
     { to: "/", label: "Ruleta", show: hasRole("streamer") || hasRole("admin") },
     { to: "/moderation", label: "Moderación", show: hasRole("moderator") || hasRole("admin") },
     { to: "/history", label: "Historial", show: hasRole("streamer") || hasRole("admin") },
+    { to: "/audit", label: "Auditoría", show: hasRole("admin") || hasRole("moderator") },
     { to: "/admin", label: "Admin", show: hasRole("admin") },
-    { to: "/admin/users", label: "Usuarios", show: hasRole("admin") },
+    { to: "/users", label: "Usuarios", show: hasRole("admin") },
+    { to: "/trash", label: "Papelera", show: hasRole("admin") },
   ];
 
   return (
