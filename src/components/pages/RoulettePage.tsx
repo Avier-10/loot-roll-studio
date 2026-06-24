@@ -1,20 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { performSpin, getPendingSpin, acknowledgePendingSpin } from "@/lib/spin.functions";
 import { Roulette, CategoryLegend } from "@/components/Roulette";
 import { ResultModal } from "@/components/ResultModal";
 import { AppNav } from "@/components/AppNav";
+import { useStreamMode } from "@/lib/streamMode";
 import type { Item } from "@/lib/types";
 
-export function RoulettePage() {
+interface Props {
+  /** Hides nav/legend/etc. — only logo + roulette + spin + result remain. */
+  stream?: boolean;
+}
+
+export function RoulettePage({ stream = false }: Props) {
   const [winner, setWinner] = useState<Item | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requesting, setRequesting] = useState(false);
   const [pendingNotice, setPendingNotice] = useState(false);
+  const { streamMode, setStreamMode } = useStreamMode();
+  const navigate = useNavigate();
 
   const spinFn = useServerFn(performSpin);
   const getPendingFn = useServerFn(getPendingSpin);
@@ -31,7 +40,6 @@ export function RoulettePage() {
     },
   });
 
-  // Restore pending result on mount (e.g. after navigation away)
   useEffect(() => {
     let cancelled = false;
     void getPendingFn().then((res) => {
@@ -46,7 +54,6 @@ export function RoulettePage() {
     return () => { cancelled = true; };
   }, [getPendingFn]);
 
-  // Warn before leaving when a result is pending
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (hasPendingRef.current || spinning) {
@@ -85,26 +92,25 @@ export function RoulettePage() {
     try { await ackPendingFn(); } catch {}
   }
 
-  const buttonLabel = requesting
-    ? "Solicitando…"
-    : spinning
-      ? "Girando…"
-      : "Girar";
+  const buttonLabel = requesting ? "Solicitando…" : spinning ? "Girando…" : "Girar";
+  const inStream = stream || streamMode;
 
   return (
     <>
-      <AppNav />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      {!stream && <AppNav />}
+      <main className={inStream ? "min-h-screen flex flex-col items-center justify-center px-4 py-6" : "max-w-7xl mx-auto px-4 py-8"}>
         <header className="text-center mb-8">
-          <h1 className="font-display text-4xl sm:text-5xl font-bold text-gold tracking-widest">
-            RULETA EN VIVO
+          <h1 className="font-display text-4xl sm:text-6xl font-bold text-gold tracking-widest">
+            LOOTSPIN
           </h1>
-          <p className="text-muted-foreground mt-2 text-sm uppercase tracking-[0.3em]">
-            Beneficios · Castigos · Sin piedad
-          </p>
+          {!inStream && (
+            <p className="text-muted-foreground mt-2 text-sm uppercase tracking-[0.3em]">
+              Beneficios · Castigos · Sin piedad
+            </p>
+          )}
         </header>
 
-        {pendingNotice && (
+        {!inStream && pendingNotice && (
           <div role="status" className="mb-4 surface-premium border border-gold/40 rounded-xl px-4 py-3 text-sm text-gold">
             Tenés un resultado pendiente de visualizar.{" "}
             <button onClick={() => setModalOpen(true)} className="underline font-semibold">
@@ -118,15 +124,17 @@ export function RoulettePage() {
             No hay elementos en el pool. Crea contenido desde el panel de administración.
           </div>
         ) : (
-          <Roulette
-            pool={pool}
-            winner={winner}
-            spinning={spinning}
-            onSpinComplete={() => { setSpinning(false); setModalOpen(true); }}
-          />
+          <div className={inStream ? "w-full max-w-5xl" : ""}>
+            <Roulette
+              pool={pool}
+              winner={winner}
+              spinning={spinning}
+              onSpinComplete={() => { setSpinning(false); setModalOpen(true); }}
+            />
+          </div>
         )}
 
-        <CategoryLegend />
+        {!inStream && <CategoryLegend />}
 
         <div className="mt-8 flex flex-col items-center gap-3">
           <button
@@ -139,6 +147,15 @@ export function RoulettePage() {
           </button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         </div>
+
+        {stream && (
+          <button
+            onClick={() => { setStreamMode(false); void navigate({ to: "/" }); }}
+            className="fixed bottom-3 right-3 text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-border bg-background/70 text-muted-foreground hover:text-foreground transition opacity-50 hover:opacity-100"
+          >
+            Salir de Stream Mode
+          </button>
+        )}
       </main>
 
       <ResultModal item={winner} open={modalOpen} onClose={handleClose} />

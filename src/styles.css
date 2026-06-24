@@ -46,39 +46,44 @@
 :root {
   --radius: 0.75rem;
 
-  /* Casino / Lootbox dark palette */
-  --background: oklch(0.14 0.04 285);
-  --foreground: oklch(0.97 0.01 280);
+  /* Lootspin brand palette — anchored on #63297E */
+  --brand-primary: oklch(0.39 0.16 320);   /* #63297E base */
+  --brand-hover:   oklch(0.46 0.18 320);   /* #7A349B */
+  --brand-deep:    oklch(0.31 0.14 320);   /* #4B1E61 */
+  --brand-glow:    oklch(0.55 0.18 320);   /* #8D49AC */
 
-  --card: oklch(0.19 0.05 285);
-  --card-foreground: oklch(0.97 0.01 280);
+  --background: oklch(0.13 0.04 320);
+  --foreground: oklch(0.97 0.01 320);
 
-  --popover: oklch(0.17 0.05 285);
-  --popover-foreground: oklch(0.97 0.01 280);
+  --card: oklch(0.19 0.06 320);
+  --card-foreground: oklch(0.97 0.01 320);
 
-  /* Primary = deep violet */
-  --primary: oklch(0.55 0.22 295);
-  --primary-foreground: oklch(0.98 0.01 280);
+  --popover: oklch(0.17 0.06 320);
+  --popover-foreground: oklch(0.97 0.01 320);
 
-  --secondary: oklch(0.26 0.06 285);
-  --secondary-foreground: oklch(0.97 0.01 280);
+  /* Primary = #63297E */
+  --primary: var(--brand-primary);
+  --primary-foreground: oklch(0.98 0.01 320);
 
-  --muted: oklch(0.22 0.04 285);
-  --muted-foreground: oklch(0.72 0.04 280);
+  --secondary: oklch(0.25 0.07 320);
+  --secondary-foreground: oklch(0.97 0.01 320);
 
-  --accent: oklch(0.30 0.10 295);
-  --accent-foreground: oklch(0.98 0.01 280);
+  --muted: oklch(0.22 0.05 320);
+  --muted-foreground: oklch(0.72 0.04 320);
+
+  --accent: var(--brand-deep);
+  --accent-foreground: oklch(0.98 0.01 320);
 
   --destructive: oklch(0.62 0.24 25);
-  --destructive-foreground: oklch(0.98 0.01 280);
+  --destructive-foreground: oklch(0.98 0.01 320);
 
-  --border: oklch(0.30 0.05 290 / 60%);
-  --input: oklch(0.25 0.05 290);
-  --ring: oklch(0.78 0.16 85);
+  --border: oklch(0.34 0.10 320 / 60%);
+  --input: oklch(0.24 0.07 320);
+  --ring: var(--brand-glow);
 
   /* Brand accents */
   --gold: oklch(0.82 0.16 85);
-  --gold-foreground: oklch(0.14 0.04 285);
+  --gold-foreground: oklch(0.14 0.04 320);
 
   --benefit: oklch(0.72 0.20 145);
   --punish: oklch(0.65 0.24 25);
@@ -93,8 +98,8 @@
 }
 
 .dark {
-  --background: oklch(0.14 0.04 285);
-  --foreground: oklch(0.97 0.01 280);
+  --background: oklch(0.13 0.04 320);
+  --foreground: oklch(0.97 0.01 320);
 }
 
 @layer base {
@@ -103,12 +108,16 @@
   body {
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(ellipse at top, oklch(0.30 0.12 295 / 0.45), transparent 55%),
-      radial-gradient(ellipse at bottom, oklch(0.20 0.08 290 / 0.5), transparent 60%),
-      linear-gradient(180deg, oklch(0.10 0.03 285), oklch(0.16 0.05 290));
+      radial-gradient(ellipse at top, oklch(0.32 0.14 320 / 0.50), transparent 55%),
+      radial-gradient(ellipse at bottom, oklch(0.20 0.10 320 / 0.50), transparent 60%),
+      linear-gradient(180deg, oklch(0.10 0.03 320), oklch(0.16 0.06 320));
     min-height: 100vh;
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.02em; }
+
+  /* Stream mode: hide chrome and let the roulette breathe for OBS */
+  body.stream-mode [data-stream-hide] { display: none !important; }
+  body.stream-mode { background-image: linear-gradient(180deg, #050108, #0c0414); }
 }
 
 /* ---------- Utility classes ---------- */
@@ -121,9 +130,9 @@
 }
 @utility glow-violet {
   box-shadow:
-    0 0 0 1px oklch(0.55 0.22 295 / 0.55),
-    0 0 30px oklch(0.55 0.22 295 / 0.45),
-    0 0 80px oklch(0.55 0.22 295 / 0.20);
+    0 0 0 1px var(--brand-glow),
+    0 0 30px oklch(0.55 0.18 320 / 0.55),
+    0 0 80px oklch(0.55 0.18 320 / 0.25);
 }
 @utility glow-benefit {
   box-shadow:
@@ -139,8 +148,8 @@
 }
 @utility surface-premium {
   background:
-    linear-gradient(180deg, oklch(0.22 0.06 290 / 0.95), oklch(0.16 0.05 290 / 0.95));
-  border: 1px solid oklch(0.40 0.08 290 / 0.55);
+    linear-gradient(180deg, oklch(0.22 0.07 320 / 0.95), oklch(0.16 0.06 320 / 0.95));
+  border: 1px solid oklch(0.42 0.10 320 / 0.55);
   box-shadow:
     inset 0 1px 0 oklch(1 0 0 / 0.06),
     0 12px 40px oklch(0 0 0 / 0.5);

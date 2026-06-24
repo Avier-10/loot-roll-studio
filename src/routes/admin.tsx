@@ -1,9 +1,8 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppNav } from "@/components/AppNav";
-import { PROBABILITIES } from "@/config/probabilities";
 import type { Item, ItemCategory, ItemType } from "@/lib/types";
 import { z } from "zod";
 
@@ -42,25 +41,18 @@ function AdminPage() {
 }
 
 function ProbabilitiesPanel() {
-  const total = PROBABILITIES.reduce((s, p) => s + p.weight, 0);
   return (
-    <section className="surface-premium rounded-2xl p-6">
-      <h2 className="font-display text-xl font-bold mb-4">Probabilidades</h2>
-      <p className="text-xs text-muted-foreground mb-4">
-        Editar en <code className="text-gold">src/config/probabilities.ts</code>.
-        Estas se aplican en el servidor.
-      </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {PROBABILITIES.map((p) => (
-          <div key={p.category} className="rounded-md border border-border p-3 text-center">
-            <div className="text-xs uppercase tracking-widest font-bold" style={{ color: `var(--${p.color})` }}>
-              {p.type} · {p.label}
-            </div>
-            <div className="text-2xl font-display mt-1">{((p.weight / total) * 100).toFixed(0)}%</div>
-            <div className="text-[10px] text-muted-foreground">peso: {p.weight}</div>
-          </div>
-        ))}
+    <section className="surface-premium rounded-2xl p-6 flex items-center justify-between gap-4">
+      <div>
+        <h2 className="font-display text-xl font-bold mb-1">Probabilidades</h2>
+        <p className="text-xs text-muted-foreground">
+          Gestión versionada: editá los pesos, compará versiones y restaurá configuraciones previas.
+        </p>
       </div>
+      <Link to="/probabilities"
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-bold uppercase tracking-wider whitespace-nowrap">
+        Abrir
+      </Link>
     </section>
   );
 }

@@ -164,6 +164,36 @@ export type Database = {
           },
         ]
       }
+      probability_versions: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          restored_from_version: number | null
+          version: number
+        }
+        Insert: {
+          config: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          restored_from_version?: number | null
+          version: number
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          restored_from_version?: number | null
+          version?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"]
@@ -206,6 +236,8 @@ export type Database = {
       spins: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           item_id: string | null
           item_snapshot: Json
@@ -214,6 +246,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           item_id?: string | null
           item_snapshot: Json
@@ -222,6 +256,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           item_id?: string | null
           item_snapshot?: Json
