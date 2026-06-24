@@ -3,14 +3,15 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AppRole = "admin" | "streamer" | "moderator";
+export type AccountStatus = "pendiente" | "activo" | "suspendido" | "deshabilitado";
 
 interface AuthCtx {
   user: User | null;
   session: Session | null;
   roles: AppRole[];
+  accountStatus: AccountStatus | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
-  signUp: (email: string, password: string, username: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   hasRole: (r: AppRole) => boolean;
 }
@@ -21,12 +22,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [accountStatus, setAccountStatus] = useState<AccountStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadRoles = async (uid: string | undefined) => {
-    if (!uid) { setRoles([]); return; }
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
-    setRoles(((data ?? []) as { role: AppRole }[]).map((r) => r.role));
+  const loadIdentity = async (uid: string | undefined) => {
+    if (!uid) { setRoles([]); setAccountStatus(null); return; }
+    const [rolesRes, profileRes] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.from("profiles").select("account_status").eq("id", uid).maybeSingle(),
+    ]);
+    setRoles(((rolesRes.data ?? []) as { role: AppRole }[]).map((r) => r.role));
+    setAccountStatus((profileRes.data?.account_status as AccountStatus | undefined) ?? null);
   };
 
   useEffect(() => {
@@ -34,33 +40,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "INITIAL_SESSION") {
-        setTimeout(() => { void loadRoles(s?.user?.id); }, 0);
+        setTimeout(() => { void loadIdentity(s?.user?.id); }, 0);
       }
     });
     void supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      void loadRoles(data.session?.user?.id).finally(() => setLoading(false));
+      void loadIdentity(data.session?.user?.id).finally(() => setLoading(false));
     });
     return () => { sub.subscription.unsubscribe(); };
   }, []);
 
   const signIn: AuthCtx["signIn"] = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return error ? { error: error.message } : {};
-  };
-  const signUp: AuthCtx["signUp"] = async (email, password, username) => {
-    const { error } = await supabase.auth.signUp({
-      email, password,
-      options: { data: { username, display_name: username }, emailRedirectTo: `${window.location.origin}/` }
-    });
-    return error ? { error: error.message } : {};
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    // Validate account status on the spot
+    const uid = data.user?.id;
+    if (uid) {
+      const { data: prof } = await supabase
+        .from("profiles").select("account_status").eq("id", uid).maybeSingle();
+      const status = prof?.account_status as AccountStatus | undefined;
+      if (status && status !== "activo") {
+        await supabase.auth.signOut();
+        return { error: `Tu cuenta está ${status}. Contactá a un administrador.` };
+      }
+    }
+    return {};
   };
   const signOut = async () => { await supabase.auth.signOut(); };
   const hasRole = (r: AppRole) => roles.includes(r);
 
   return (
-    <Ctx.Provider value={{ user, session, roles, loading, signIn, signUp, signOut, hasRole }}>
+    <Ctx.Provider value={{ user, session, roles, accountStatus, loading, signIn, signOut, hasRole }}>
       {children}
     </Ctx.Provider>
   );

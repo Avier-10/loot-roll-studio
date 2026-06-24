@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Acceso · Lootspin" }] }),
@@ -9,12 +8,10 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { user, loading, signIn, signUp } = useAuth();
+  const { user, loading, signIn } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -26,9 +23,7 @@ function AuthPage() {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const res = mode === "signin"
-      ? await signIn(email.trim(), password)
-      : await signUp(email.trim(), password, username.trim() || email.split("@")[0]);
+    const res = await signIn(email.trim(), password);
     setSubmitting(false);
     if (res.error) setError(res.error);
   }
@@ -40,35 +35,10 @@ function AuthPage() {
           LOOTSPIN
         </h1>
         <p className="text-center text-sm text-muted-foreground mb-6">
-          Acceso restringido a usuarios autorizados
+          Acceso restringido. Solo los administradores pueden crear cuentas nuevas.
         </p>
 
-        <div className="flex rounded-md border border-border overflow-hidden mb-6">
-          {(["signin", "signup"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={cn(
-                "flex-1 py-2 text-xs uppercase tracking-widest font-semibold transition-colors",
-                mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {m === "signin" ? "Ingresar" : "Crear cuenta"}
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={onSubmit} className="space-y-4">
-          {mode === "signup" && (
-            <Field label="Usuario">
-              <input
-                value={username} onChange={(e) => setUsername(e.target.value)}
-                required maxLength={50}
-                className="w-full bg-input rounded-md px-3 py-2 border border-border focus:border-primary outline-none"
-              />
-            </Field>
-          )}
+        <form onSubmit={onSubmit} className="space-y-4" aria-label="Iniciar sesión">
           <Field label="Email">
             <input
               type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
@@ -79,13 +49,13 @@ function AuthPage() {
           <Field label="Contraseña">
             <input
               type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-              minLength={6} autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              minLength={6} autoComplete="current-password"
               className="w-full bg-input rounded-md px-3 py-2 border border-border focus:border-primary outline-none"
             />
           </Field>
 
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
+            <div role="alert" className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md px-3 py-2">
               {error}
             </div>
           )}
@@ -94,12 +64,11 @@ function AuthPage() {
             type="submit" disabled={submitting}
             className="w-full py-3 rounded-md font-display font-bold uppercase tracking-widest bg-gradient-to-b from-[oklch(0.45_0.20_295)] to-[oklch(0.28_0.14_295)] glow-violet hover:scale-[1.01] disabled:opacity-50 transition"
           >
-            {submitting ? "Procesando…" : mode === "signin" ? "Ingresar" : "Crear cuenta"}
+            {submitting ? "Procesando…" : "Iniciar sesión"}
           </button>
         </form>
         <p className="text-[11px] text-muted-foreground text-center mt-6 leading-relaxed">
-          La primera cuenta creada se convierte en administradora.
-          Las contraseñas se almacenan cifradas. Las credenciales nunca se guardan en texto plano.
+          ¿No tenés cuenta? Pedile a un administrador que la cree.
         </p>
       </div>
     </main>
