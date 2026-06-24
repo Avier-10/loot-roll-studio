@@ -1,0 +1,390 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
+      items: {
+        Row: {
+          category: Database["public"]["Enums"]["item_category"]
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          is_active: boolean
+          suggested_at: string | null
+          suggested_by_username: string | null
+          title: string
+          type: Database["public"]["Enums"]["item_type"]
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["item_category"]
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          is_active?: boolean
+          suggested_at?: string | null
+          suggested_by_username?: string | null
+          title: string
+          type: Database["public"]["Enums"]["item_type"]
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["item_category"]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          suggested_at?: string | null
+          suggested_by_username?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["item_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pending_submissions: {
+        Row: {
+          approved_item_id: string | null
+          created_at: string
+          id: string
+          kick_username: string
+          proposed_category: Database["public"]["Enums"]["item_category"] | null
+          proposed_description: string | null
+          proposed_title: string | null
+          proposed_type: Database["public"]["Enums"]["item_type"] | null
+          raw_message: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["submission_status"]
+        }
+        Insert: {
+          approved_item_id?: string | null
+          created_at?: string
+          id?: string
+          kick_username: string
+          proposed_category?:
+            | Database["public"]["Enums"]["item_category"]
+            | null
+          proposed_description?: string | null
+          proposed_title?: string | null
+          proposed_type?: Database["public"]["Enums"]["item_type"] | null
+          raw_message: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+        }
+        Update: {
+          approved_item_id?: string | null
+          created_at?: string
+          id?: string
+          kick_username?: string
+          proposed_category?:
+            | Database["public"]["Enums"]["item_category"]
+            | null
+          proposed_description?: string | null
+          proposed_title?: string | null
+          proposed_type?: Database["public"]["Enums"]["item_type"] | null
+          raw_message?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["submission_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_submissions_approved_item_id_fkey"
+            columns: ["approved_item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          is_active?: boolean
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      spins: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string | null
+          item_snapshot: Json
+          spun_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_snapshot: Json
+          spun_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string | null
+          item_snapshot?: Json
+          spun_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spins_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      app_role: "admin" | "streamer" | "moderator"
+      item_category:
+        | "bueno"
+        | "muy_bueno"
+        | "excelente"
+        | "leve"
+        | "medio"
+        | "fuerte"
+      item_type: "beneficio" | "castigo"
+      submission_status: "pendiente" | "aprobado" | "rechazado"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["admin", "streamer", "moderator"],
+      item_category: [
+        "bueno",
+        "muy_bueno",
+        "excelente",
+        "leve",
+        "medio",
+        "fuerte",
+      ],
+      item_type: ["beneficio", "castigo"],
+      submission_status: ["pendiente", "aprobado", "rechazado"],
+    },
+  },
+} as const
