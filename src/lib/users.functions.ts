@@ -15,6 +15,23 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
 const roleSchema = z.enum(["admin", "streamer", "moderator"]);
 const statusSchema = z.enum(["pendiente", "activo", "suspendido", "deshabilitado"]);
 
+async function audit(
+  actor: string,
+  action: string,
+  targetType: string,
+  targetTable: string,
+  targetId: string | null,
+  oldValue: unknown,
+  newValue: unknown,
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.rpc("write_audit", {
+    _actor: actor, _action: action, _target_type: targetType,
+    _target_table: targetTable, _target_id: targetId as any,
+    _old: (oldValue ?? null) as any, _new: (newValue ?? null) as any, _metadata: {} as any,
+  });
+}
+
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -70,10 +87,12 @@ export const createUser = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const uid = created.user!.id;
-    // Set requested role (replace default 'streamer' from trigger if needed)
     if (data.role !== "streamer") {
       await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
     }
+    await audit((context as any).userId, "user.create", "user", "auth.users", uid, null, {
+      email: data.email, username: data.username, role: data.role,
+    });
     return { id: uid };
   });
 
@@ -90,10 +109,14 @@ export const setUserRoles = createServerFn({ method: "POST" })
       throw new Error("No podés removerte el rol admin a vos mismo.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: prev } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", data.user_id);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
     await supabaseAdmin.from("user_roles").insert(
       data.roles.map((r) => ({ user_id: data.user_id, role: r }))
     );
+    await audit((context as any).userId, "user.roles_change", "user", "user_roles", data.user_id,
+      (prev ?? []).map((p) => p.role), data.roles);
     return { ok: true };
   });
 
