@@ -2,7 +2,7 @@
 // Modify these weights at any time. They are applied on the server.
 // Weights are relative (do not need to sum to 100).
 
-import type { ItemCategory, ItemType } from "./types";
+import type { ItemCategory, ItemType } from "@/lib/types";
 
 export interface CategoryConfig {
   type: ItemType;
