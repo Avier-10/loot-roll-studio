@@ -17,6 +17,8 @@ export interface Item {
   suggested_by_username: string | null;
   suggested_at: string | null;
   created_at: string;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
 }
 
 export interface SpinResult {

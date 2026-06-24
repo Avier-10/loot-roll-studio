@@ -15,6 +15,23 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
 const roleSchema = z.enum(["admin", "streamer", "moderator"]);
 const statusSchema = z.enum(["pendiente", "activo", "suspendido", "deshabilitado"]);
 
+async function audit(
+  actor: string,
+  action: string,
+  targetType: string,
+  targetTable: string,
+  targetId: string | null,
+  oldValue: unknown,
+  newValue: unknown,
+) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.rpc("write_audit", {
+    _actor: actor, _action: action, _target_type: targetType,
+    _target_table: targetTable, _target_id: targetId as any,
+    _old: (oldValue ?? null) as any, _new: (newValue ?? null) as any, _metadata: {} as any,
+  });
+}
+
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -70,10 +87,12 @@ export const createUser = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const uid = created.user!.id;
-    // Set requested role (replace default 'streamer' from trigger if needed)
     if (data.role !== "streamer") {
       await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
     }
+    await audit((context as any).userId, "user.create", "user", "auth.users", uid, null, {
+      email: data.email, username: data.username, role: data.role,
+    });
     return { id: uid };
   });
 
@@ -90,10 +109,14 @@ export const setUserRoles = createServerFn({ method: "POST" })
       throw new Error("No podés removerte el rol admin a vos mismo.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: prev } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", data.user_id);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
     await supabaseAdmin.from("user_roles").insert(
       data.roles.map((r) => ({ user_id: data.user_id, role: r }))
     );
+    await audit((context as any).userId, "user.roles_change", "user", "user_roles", data.user_id,
+      (prev ?? []).map((p) => p.role), data.roles);
     return { ok: true };
   });
 
@@ -110,9 +133,17 @@ export const setUserStatus = createServerFn({ method: "POST" })
       throw new Error("No podés desactivar tu propia cuenta.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: prev } = await supabaseAdmin
+      .from("profiles").select("account_status").eq("id", data.user_id).single();
     const { error } = await supabaseAdmin
       .from("profiles").update({ account_status: data.status }).eq("id", data.user_id);
     if (error) throw new Error(error.message);
+    const action = data.status === "suspendido" ? "user.suspend"
+      : data.status === "activo" ? "user.activate"
+      : data.status === "deshabilitado" ? "user.disable"
+      : "user.status_change";
+    await audit((context as any).userId, action, "user", "profiles", data.user_id,
+      { account_status: prev?.account_status }, { account_status: data.status });
     return { ok: true };
   });
 
@@ -131,8 +162,11 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     if (data.username) patch.username = data.username;
     if (data.display_name !== undefined) patch.display_name = data.display_name;
     if (Object.keys(patch).length === 0) return { ok: true };
-    const { error } = await supabaseAdmin
-      .from("profiles").update(patch).eq("id", data.user_id);
+    const { data: prev } = await supabaseAdmin
+      .from("profiles").select("username, display_name").eq("id", data.user_id).single();
+    const { data: after, error } = await supabaseAdmin
+      .from("profiles").update(patch).eq("id", data.user_id).select("username, display_name").single();
     if (error) throw new Error(error.message);
+    await audit((context as any).userId, "user.profile_update", "user", "profiles", data.user_id, prev, after);
     return { ok: true };
   });

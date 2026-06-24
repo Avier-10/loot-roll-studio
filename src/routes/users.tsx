@@ -7,7 +7,7 @@ import {
   listUsers, createUser, setUserRoles, setUserStatus, updateUserProfile,
 } from "@/lib/users.functions";
 
-export const Route = createFileRoute("/admin/users")({
+export const Route = createFileRoute("/users")({
   head: () => ({ meta: [{ title: "Usuarios · Lootspin" }] }),
   component: UsersPage,
 });

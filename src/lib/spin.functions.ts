@@ -75,6 +75,14 @@ export const performSpin = createServerFn({ method: "POST" })
       // 3d. Release lock and mark pending
       await supabaseAdmin.rpc("release_spin_lock", { _uid: userId, _pending_spin_id: spinId });
 
+      // 3e. Audit
+      await supabaseAdmin.rpc("write_audit", {
+        _actor: userId, _action: "spin.perform", _target_type: "spin",
+        _target_table: "spins", _target_id: spinId as any,
+        _old: null as any, _new: { item_id: item.id, title: item.title, type: item.type, category: item.category } as any,
+        _metadata: {} as any,
+      });
+
       return { item, spinId };
     } catch (e) {
       // Release lock on error to avoid permanent block (no pending result)
