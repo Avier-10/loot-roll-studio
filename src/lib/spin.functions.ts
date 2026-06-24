@@ -50,7 +50,7 @@ export const performSpin = createServerFn({ method: "POST" })
         .from("probability_versions")
         .select("config")
         .order("version", { ascending: false }).limit(1).maybeSingle();
-      const probs: CategoryConfig[] = (latestVer?.config as CategoryConfig[]) ?? PROBABILITIES;
+      const probs: CategoryConfig[] = (latestVer?.config as unknown as CategoryConfig[]) ?? PROBABILITIES;
       const total = probs.reduce((s, p) => s + p.weight, 0) || 1;
       let r = Math.random() * total;
       let chosen = probs[0];
