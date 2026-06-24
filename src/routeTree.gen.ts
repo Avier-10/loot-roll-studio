@@ -11,6 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as TrashRouteImport } from './routes/trash'
+import { Route as StreamRouteImport } from './routes/stream'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ProbabilitiesRouteImport } from './routes/probabilities'
 import { Route as ModerationRouteImport } from './routes/moderation'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -26,6 +29,21 @@ const UsersRoute = UsersRouteImport.update({
 const TrashRoute = TrashRouteImport.update({
   id: '/trash',
   path: '/trash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StreamRoute = StreamRouteImport.update({
+  id: '/stream',
+  path: '/stream',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProbabilitiesRoute = ProbabilitiesRouteImport.update({
+  id: '/probabilities',
+  path: '/probabilities',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ModerationRoute = ModerationRouteImport.update({
@@ -66,6 +84,9 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/moderation': typeof ModerationRoute
+  '/probabilities': typeof ProbabilitiesRoute
+  '/profile': typeof ProfileRoute
+  '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
 }
@@ -76,6 +97,9 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/moderation': typeof ModerationRoute
+  '/probabilities': typeof ProbabilitiesRoute
+  '/profile': typeof ProfileRoute
+  '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
 }
@@ -87,6 +111,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
   '/moderation': typeof ModerationRoute
+  '/probabilities': typeof ProbabilitiesRoute
+  '/profile': typeof ProfileRoute
+  '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
 }
@@ -99,6 +126,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/history'
     | '/moderation'
+    | '/probabilities'
+    | '/profile'
+    | '/stream'
     | '/trash'
     | '/users'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +139,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/history'
     | '/moderation'
+    | '/probabilities'
+    | '/profile'
+    | '/stream'
     | '/trash'
     | '/users'
   id:
@@ -119,6 +152,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/history'
     | '/moderation'
+    | '/probabilities'
+    | '/profile'
+    | '/stream'
     | '/trash'
     | '/users'
   fileRoutesById: FileRoutesById
@@ -130,6 +166,9 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   HistoryRoute: typeof HistoryRoute
   ModerationRoute: typeof ModerationRoute
+  ProbabilitiesRoute: typeof ProbabilitiesRoute
+  ProfileRoute: typeof ProfileRoute
+  StreamRoute: typeof StreamRoute
   TrashRoute: typeof TrashRoute
   UsersRoute: typeof UsersRoute
 }
@@ -148,6 +187,27 @@ declare module '@tanstack/react-router' {
       path: '/trash'
       fullPath: '/trash'
       preLoaderRoute: typeof TrashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stream': {
+      id: '/stream'
+      path: '/stream'
+      fullPath: '/stream'
+      preLoaderRoute: typeof StreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/probabilities': {
+      id: '/probabilities'
+      path: '/probabilities'
+      fullPath: '/probabilities'
+      preLoaderRoute: typeof ProbabilitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/moderation': {
@@ -202,6 +262,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   HistoryRoute: HistoryRoute,
   ModerationRoute: ModerationRoute,
+  ProbabilitiesRoute: ProbabilitiesRoute,
+  ProfileRoute: ProfileRoute,
+  StreamRoute: StreamRoute,
   TrashRoute: TrashRoute,
   UsersRoute: UsersRoute,
 }
