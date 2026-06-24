@@ -66,7 +66,6 @@ function ProbabilitiesPanel() {
 }
 
 function ItemsManager() {
-  const { user } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const [filter, setFilter] = useState<"all" | ItemType>("all");
   const [search, setSearch] = useState("");
