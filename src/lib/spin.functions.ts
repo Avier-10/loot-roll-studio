@@ -69,7 +69,7 @@ export const performSpin = createServerFn({ method: "POST" })
       // 3c. Insert spin with the locked id
       const { error: insErr } = await supabaseAdmin
         .from("spins")
-        .insert({ id: spinId, item_id: item.id, item_snapshot: item as unknown as Record<string, unknown>, spun_by: userId });
+        .insert({ id: spinId, item_id: item.id, item_snapshot: item as any, spun_by: userId });
       if (insErr) throw new Error(insErr.message);
 
       // 3d. Release lock and mark pending
