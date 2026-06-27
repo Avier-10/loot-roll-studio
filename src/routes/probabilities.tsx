@@ -160,12 +160,18 @@ function ProbsContent() {
 
       <section className="surface-premium rounded-2xl p-6 space-y-4">
         <h2 className="font-display text-xl font-bold">Comparar versiones</h2>
+        <p className="text-xs text-muted-foreground">
+          "Cambio" = porcentaje en la versión <span className="text-foreground">A</span> menos el porcentaje en la versión <span className="text-foreground">B</span>.
+        </p>
         <div className="flex gap-3 items-center flex-wrap text-sm">
-          <VersionSelect label="A" value={compareA} setValue={setCompareA} versions={versions} />
-          <VersionSelect label="B" value={compareB} setValue={setCompareB} versions={versions} />
+          <VersionSelect label="A (más reciente)" value={compareA} setValue={setCompareA} versions={versions} />
+          <VersionSelect label="B (referencia)" value={compareB} setValue={setCompareB} versions={versions} />
         </div>
         {verA && verB && <CompareTable a={verA} b={verB} />}
+        {verA && verB && <VersionMetaPanel a={verA} b={verB} />}
       </section>
+
+      {hasRole("admin") && <DiagnosticPanel latest={latest} />}
 
       <section className="surface-premium rounded-2xl p-6">
         <h2 className="font-display text-xl font-bold mb-4">Historial</h2>
