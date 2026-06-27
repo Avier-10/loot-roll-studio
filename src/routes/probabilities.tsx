@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { AppNav } from "@/components/AppNav";
 import {
   listProbabilityVersions, updateProbabilities, restoreProbabilityVersion,
+  verifyActiveProbabilities,
 } from "@/lib/probabilities.functions";
 
 export const Route = createFileRoute("/probabilities")({
