@@ -111,14 +111,18 @@ function ProbsContent() {
       await updateFn({ data: { config, note: note.trim() || undefined } });
       setNote("");
       await load();
+      await qc.invalidateQueries({ queryKey: ["probabilities", "active"] });
     } catch (e) { setError(e instanceof Error ? e.message : "Error"); }
   }
 
   async function restore(version: number) {
     if (!canEdit) return;
     if (!confirm(`¿Restaurar la versión ${version}? Se creará una nueva versión con esa configuración.`)) return;
-    try { await restoreFn({ data: { version } }); await load(); }
-    catch (e) { setError(e instanceof Error ? e.message : "Error"); }
+    try {
+      await restoreFn({ data: { version } });
+      await load();
+      await qc.invalidateQueries({ queryKey: ["probabilities", "active"] });
+    } catch (e) { setError(e instanceof Error ? e.message : "Error"); }
   }
 
   const latest = versions[0];
