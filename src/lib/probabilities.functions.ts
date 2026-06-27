@@ -46,6 +46,44 @@ export const getActiveProbabilities = createServerFn({ method: "GET" })
     };
   });
 
+/**
+ * Admin diagnostic: returns exactly what the spin algorithm resolves as the
+ * active configuration. Mirrors the lookup performed in performSpin so the
+ * frontend can verify the UI matches what's actually used by the server.
+ */
+export const verifyActiveProbabilities = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const ctx = context as any;
+    await requireRoles(ctx, ["admin", "moderator"]);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("probability_versions")
+      .select("version, config, created_at, created_by, note")
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const fallback = !data;
+    const config = (data?.config as CategoryConfig[]) ?? PROBABILITIES;
+    let createdByUsername: string | null = null;
+    if (data?.created_by) {
+      const { data: prof } = await supabaseAdmin
+        .from("profiles").select("username").eq("id", data.created_by).maybeSingle();
+      createdByUsername = (prof?.username as string) ?? null;
+    }
+    return {
+      version: data?.version ?? 0,
+      config,
+      created_at: data?.created_at ?? null,
+      created_by_username: createdByUsername,
+      note: data?.note ?? null,
+      fallback,
+      // Echo back a checksum-like signature for fast comparison
+      signature: config.map((c) => `${c.category}:${c.weight}`).sort().join("|"),
+    };
+  });
+
 export const listProbabilityVersions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
