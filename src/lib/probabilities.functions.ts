@@ -65,7 +65,7 @@ export const verifyActiveProbabilities = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     const fallback = !data;
-    const config = (data?.config as CategoryConfig[]) ?? PROBABILITIES;
+    const config = ((data?.config as unknown) as CategoryConfig[]) ?? PROBABILITIES;
     let createdByUsername: string | null = null;
     if (data?.created_by) {
       const { data: prof } = await supabaseAdmin
