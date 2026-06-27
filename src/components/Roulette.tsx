@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Item } from "@/lib/types";
-import { categoryConfig, PROBABILITIES } from "@/config/probabilities";
+import { categoryConfig, PROBABILITIES, type CategoryConfig } from "@/config/probabilities";
+import { getActiveProbabilities } from "@/lib/probabilities.functions";
 import { playSound } from "@/lib/sounds";
 import { cn } from "@/lib/utils";
 
@@ -16,14 +18,19 @@ const CARD_GAP = 12;  // px
 const STEP = CARD_W + CARD_GAP;
 const STRIP_LEN = 80; // total cards rendered (more than enough for several full traversals)
 const WINNER_INDEX = 60; // where in the strip we place the winner
+const SPIN_MS = 6500;
 
 function randomFrom<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 
 export function Roulette({ pool, winner, spinning, onSpinComplete }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const tickAudioTimer = useRef<number | null>(null);
+  // Spin nonce: bump on every winner change so a new strip and animation always run,
+  // even if the same item is selected twice in a row.
+  const spinNonceRef = useRef(0);
 
   // Build a strip whenever a spin starts; winner is placed at WINNER_INDEX.
+  // Depend on a nonce so the strip is fresh on every spin.
   const strip = useMemo<Item[]>(() => {
     if (pool.length === 0) return [];
     const arr: Item[] = [];
@@ -31,43 +38,45 @@ export function Roulette({ pool, winner, spinning, onSpinComplete }: Props) {
     if (winner) arr[WINNER_INDEX] = winner;
     return arr;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [winner?.id, pool.length]);
-
-  const [offset, setOffset] = useState(0);
-  const [phase, setPhase] = useState<"idle" | "spinning" | "settled">("idle");
+  }, [winner?.id, pool.length, spinNonceRef.current]);
 
   useEffect(() => {
     if (!spinning || !winner || !trackRef.current) return;
+    spinNonceRef.current += 1;
 
-    // Reset to starting position instantly
-    setPhase("idle");
-    trackRef.current.style.transition = "none";
-    setOffset(0);
+    const track = trackRef.current;
+    const container = track.parentElement!;
 
     // Compute landing offset (center the winner under the marker).
-    const container = trackRef.current.parentElement!;
     const containerW = container.clientWidth;
     const centerOfWinner = WINNER_INDEX * STEP + CARD_W / 2;
     const jitter = (Math.random() - 0.5) * (CARD_W * 0.6); // land slightly off-center for realism
     const target = -(centerOfWinner - containerW / 2 + jitter);
 
-    // Trigger animation on next frame
+    // CRITICAL: Drive the transform directly via the DOM ref instead of React state.
+    // React 18's automatic batching was collapsing a reset (offset = 0) with the
+    // subsequent target update inside requestAnimationFrame, so the second spin would
+    // animate from `target_prev` to `target_new` (a near-identical position) and look
+    // like an instant teleport.
+    track.style.transition = "none";
+    track.style.transform = "translateX(0px)";
+    // Force reflow so the browser registers the reset before we re-enable transition.
+    void track.offsetWidth;
+
     playSound("spin_start");
-    requestAnimationFrame(() => {
+    // Next frame: enable the easing transition and apply the target transform.
+    const rafId = requestAnimationFrame(() => {
       if (!trackRef.current) return;
       trackRef.current.style.transition =
-        "transform 6.5s cubic-bezier(0.12, 0.62, 0.08, 1.0)";
-      setOffset(target);
-      setPhase("spinning");
+        `transform ${SPIN_MS}ms cubic-bezier(0.12, 0.62, 0.08, 1.0)`;
+      trackRef.current.style.transform = `translateX(${target}px)`;
     });
 
     // Ticking sound that slows as we approach the end
     let elapsed = 0;
-    const totalMs = 6500;
     const tick = () => {
-      if (elapsed >= totalMs) return;
-      const progress = elapsed / totalMs;
-      // gap grows from 50ms to 380ms
+      if (elapsed >= SPIN_MS) return;
+      const progress = elapsed / SPIN_MS;
       const gap = 50 + Math.pow(progress, 2.2) * 330;
       playSound("tick");
       elapsed += gap;
@@ -75,13 +84,13 @@ export function Roulette({ pool, winner, spinning, onSpinComplete }: Props) {
     };
     tick();
 
-    const slowTimer = window.setTimeout(() => playSound("slow_down"), 5400);
+    const slowTimer = window.setTimeout(() => playSound("slow_down"), SPIN_MS - 1100);
     const doneTimer = window.setTimeout(() => {
-      setPhase("settled");
       onSpinComplete();
-    }, totalMs + 80);
+    }, SPIN_MS + 80);
 
     return () => {
+      cancelAnimationFrame(rafId);
       if (tickAudioTimer.current) window.clearTimeout(tickAudioTimer.current);
       window.clearTimeout(slowTimer);
       window.clearTimeout(doneTimer);
@@ -98,12 +107,11 @@ export function Roulette({ pool, winner, spinning, onSpinComplete }: Props) {
           className="flex"
           style={{
             gap: `${CARD_GAP}px`,
-            transform: `translateX(${offset}px)`,
             willChange: "transform",
           }}
         >
           {strip.map((it, i) => (
-            <RouletteCard key={i} item={it} highlight={phase === "settled" && i === WINNER_INDEX} />
+            <RouletteCard key={`${spinNonceRef.current}-${i}`} item={it} highlight={false} />
           ))}
         </div>
       </div>
@@ -151,11 +159,23 @@ function RouletteCard({ item, highlight }: { item: Item; highlight: boolean }) {
   );
 }
 
+/**
+ * Legend that ALWAYS reflects the active server-side probability configuration.
+ * Single source of truth: probability_versions (latest row) — never hardcoded
+ * percentages in the UI. Falls back to the defaults file only if the server has
+ * no rows yet (first-run bootstrap).
+ */
 export function CategoryLegend() {
-  const total = PROBABILITIES.reduce((s, p) => s + p.weight, 0);
+  const { data } = useQuery({
+    queryKey: ["probabilities", "active"],
+    queryFn: () => getActiveProbabilities(),
+    staleTime: 30_000,
+  });
+  const config: CategoryConfig[] = (data?.config as CategoryConfig[]) ?? PROBABILITIES;
+  const total = config.reduce((s, p) => s + p.weight, 0) || 1;
   return (
     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-4">
-      {PROBABILITIES.map((p) => (
+      {config.map((p) => (
         <div
           key={p.category}
           className="rounded-md border border-border/60 surface-premium px-2 py-2 text-center"

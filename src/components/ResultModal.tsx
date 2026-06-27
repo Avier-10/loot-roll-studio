@@ -24,14 +24,17 @@ export function ResultModal({ item, open, onClose }: Props) {
     >
       <div
         className={cn(
-          "surface-premium rounded-2xl w-full max-w-lg p-8 text-center animate-pop-in relative",
+          // overflow-hidden ensures the decorative bar clips exactly to the rounded corners
+          "surface-premium rounded-2xl w-full max-w-lg p-8 text-center animate-pop-in relative overflow-hidden",
           isBenefit ? "glow-benefit" : "glow-punish"
         )}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Decorative bar — pinned to the top edge, full width, no extra radius */}
         <div
-          className="absolute inset-x-0 top-0 h-1.5 rounded-t-2xl"
+          className="pointer-events-none absolute top-0 left-0 right-0 h-1.5"
           style={{ background: `var(--${cfg.color})`, boxShadow: `0 0 24px var(--${cfg.color})` }}
+          aria-hidden
         />
         <div
           className="text-xs uppercase tracking-[0.3em] font-semibold mb-1"
