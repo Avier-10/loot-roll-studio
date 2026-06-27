@@ -61,9 +61,13 @@ function ProbsPage() {
 
 function ProbsContent() {
   const { hasRole } = useAuth();
+  const qc = useQueryClient();
   const listFn = useServerFn(listProbabilityVersions);
   const updateFn = useServerFn(updateProbabilities);
   const restoreFn = useServerFn(restoreProbabilityVersion);
+  // Whenever this content mounts we ensure the home legend cache is invalidated
+  // so it reflects whatever is currently active in the DB.
+  useEffect(() => { void qc.invalidateQueries({ queryKey: ["probabilities", "active"] }); }, [qc]);
 
   const [versions, setVersions] = useState<Version[]>([]);
   const [error, setError] = useState<string | null>(null);
