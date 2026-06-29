@@ -21,6 +21,8 @@ import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicSubmissionsRouteImport } from './routes/api/public/submissions'
+import { Route as ApiPublicDebugInsertRouteImport } from './routes/api/public/debug-insert'
+import { Route as ApiPublicDebugRouteImport } from './routes/api/public/debug'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -82,6 +84,16 @@ const ApiPublicSubmissionsRoute = ApiPublicSubmissionsRouteImport.update({
   path: '/api/public/submissions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDebugInsertRoute = ApiPublicDebugInsertRouteImport.update({
+  id: '/api/public/debug-insert',
+  path: '/api/public/debug-insert',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDebugRoute = ApiPublicDebugRouteImport.update({
+  id: '/api/public/debug',
+  path: '/api/public/debug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +107,8 @@ export interface FileRoutesByFullPath {
   '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
+  '/api/public/debug': typeof ApiPublicDebugRoute
+  '/api/public/debug-insert': typeof ApiPublicDebugInsertRoute
   '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +123,8 @@ export interface FileRoutesByTo {
   '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
+  '/api/public/debug': typeof ApiPublicDebugRoute
+  '/api/public/debug-insert': typeof ApiPublicDebugInsertRoute
   '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
 export interface FileRoutesById {
@@ -124,6 +140,8 @@ export interface FileRoutesById {
   '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
+  '/api/public/debug': typeof ApiPublicDebugRoute
+  '/api/public/debug-insert': typeof ApiPublicDebugInsertRoute
   '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +158,8 @@ export interface FileRouteTypes {
     | '/stream'
     | '/trash'
     | '/users'
+    | '/api/public/debug'
+    | '/api/public/debug-insert'
     | '/api/public/submissions'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +174,8 @@ export interface FileRouteTypes {
     | '/stream'
     | '/trash'
     | '/users'
+    | '/api/public/debug'
+    | '/api/public/debug-insert'
     | '/api/public/submissions'
   id:
     | '__root__'
@@ -168,6 +190,8 @@ export interface FileRouteTypes {
     | '/stream'
     | '/trash'
     | '/users'
+    | '/api/public/debug'
+    | '/api/public/debug-insert'
     | '/api/public/submissions'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +207,8 @@ export interface RootRouteChildren {
   StreamRoute: typeof StreamRoute
   TrashRoute: typeof TrashRoute
   UsersRoute: typeof UsersRoute
+  ApiPublicDebugRoute: typeof ApiPublicDebugRoute
+  ApiPublicDebugInsertRoute: typeof ApiPublicDebugInsertRoute
   ApiPublicSubmissionsRoute: typeof ApiPublicSubmissionsRoute
 }
 
@@ -272,6 +298,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSubmissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/debug-insert': {
+      id: '/api/public/debug-insert'
+      path: '/api/public/debug-insert'
+      fullPath: '/api/public/debug-insert'
+      preLoaderRoute: typeof ApiPublicDebugInsertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/debug': {
+      id: '/api/public/debug'
+      path: '/api/public/debug'
+      fullPath: '/api/public/debug'
+      preLoaderRoute: typeof ApiPublicDebugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -287,8 +327,20 @@ const rootRouteChildren: RootRouteChildren = {
   StreamRoute: StreamRoute,
   TrashRoute: TrashRoute,
   UsersRoute: UsersRoute,
+  ApiPublicDebugRoute: ApiPublicDebugRoute,
+  ApiPublicDebugInsertRoute: ApiPublicDebugInsertRoute,
   ApiPublicSubmissionsRoute: ApiPublicSubmissionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
