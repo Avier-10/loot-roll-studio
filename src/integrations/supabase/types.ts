@@ -101,6 +101,45 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_history: {
+        Row: {
+          action: string
+          created_at: string
+          external_username: string | null
+          final_content: Json | null
+          id: string
+          moderator_id: string | null
+          original_content: Json | null
+          platform: string | null
+          reason: string | null
+          submission_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          external_username?: string | null
+          final_content?: Json | null
+          id?: string
+          moderator_id?: string | null
+          original_content?: Json | null
+          platform?: string | null
+          reason?: string | null
+          submission_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          external_username?: string | null
+          final_content?: Json | null
+          id?: string
+          moderator_id?: string | null
+          original_content?: Json | null
+          platform?: string | null
+          reason?: string | null
+          submission_id?: string | null
+        }
+        Relationships: []
+      }
       pending_submissions: {
         Row: {
           approved_item_id: string | null
@@ -108,12 +147,15 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           id: string
+          ip_address: string | null
           kick_username: string
+          platform: string
           proposed_category: Database["public"]["Enums"]["item_category"] | null
           proposed_description: string | null
           proposed_title: string | null
           proposed_type: Database["public"]["Enums"]["item_type"] | null
           raw_message: string
+          rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["submission_status"]
@@ -124,7 +166,9 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
+          ip_address?: string | null
           kick_username: string
+          platform?: string
           proposed_category?:
             | Database["public"]["Enums"]["item_category"]
             | null
@@ -132,6 +176,7 @@ export type Database = {
           proposed_title?: string | null
           proposed_type?: Database["public"]["Enums"]["item_type"] | null
           raw_message: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["submission_status"]
@@ -142,7 +187,9 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           id?: string
+          ip_address?: string | null
           kick_username?: string
+          platform?: string
           proposed_category?:
             | Database["public"]["Enums"]["item_category"]
             | null
@@ -150,6 +197,7 @@ export type Database = {
           proposed_title?: string | null
           proposed_type?: Database["public"]["Enums"]["item_type"] | null
           raw_message?: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["submission_status"]

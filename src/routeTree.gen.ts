@@ -20,6 +20,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicSubmissionsRouteImport } from './routes/api/public/submissions'
 
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
@@ -76,6 +77,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSubmissionsRoute = ApiPublicSubmissionsRouteImport.update({
+  id: '/api/public/submissions',
+  path: '/api/public/submissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
+  '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
+  '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/stream': typeof StreamRoute
   '/trash': typeof TrashRoute
   '/users': typeof UsersRoute
+  '/api/public/submissions': typeof ApiPublicSubmissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/stream'
     | '/trash'
     | '/users'
+    | '/api/public/submissions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/stream'
     | '/trash'
     | '/users'
+    | '/api/public/submissions'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/stream'
     | '/trash'
     | '/users'
+    | '/api/public/submissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +183,7 @@ export interface RootRouteChildren {
   StreamRoute: typeof StreamRoute
   TrashRoute: typeof TrashRoute
   UsersRoute: typeof UsersRoute
+  ApiPublicSubmissionsRoute: typeof ApiPublicSubmissionsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/submissions': {
+      id: '/api/public/submissions'
+      path: '/api/public/submissions'
+      fullPath: '/api/public/submissions'
+      preLoaderRoute: typeof ApiPublicSubmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   StreamRoute: StreamRoute,
   TrashRoute: TrashRoute,
   UsersRoute: UsersRoute,
+  ApiPublicSubmissionsRoute: ApiPublicSubmissionsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
