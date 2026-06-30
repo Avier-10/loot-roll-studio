@@ -25,11 +25,13 @@ export const performSpin = createServerFn({ method: "POST" })
       throw new Error("Forbidden: required role streamer or admin");
     }
 
-    // 2. Account must be active
-    const { data: status } = await supabase.rpc("get_account_status", { _uid: userId });
-    if (status !== "activo") {
+    // 2. Account must be active (read own profile via RLS)
+    const { data: profileRow } = await supabase
+      .from("profiles").select("account_status").eq("id", userId).maybeSingle();
+    if (!profileRow || profileRow.account_status !== "activo") {
       throw new Error("Cuenta no activa. Contactá a un administrador.");
     }
+
 
     // 3. Privileged operations: spin lock + pick + insert
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
