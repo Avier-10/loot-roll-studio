@@ -25,6 +25,18 @@ type UserRow = {
 const ROLES: AppRole[] = ["admin", "streamer", "moderator"];
 const STATUSES: AccountStatus[] = ["activo", "pendiente", "suspendido", "deshabilitado"];
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const maybeMessage = "message" in error ? error.message : undefined;
+    if (typeof maybeMessage === "string" && maybeMessage.trim()) return maybeMessage;
+    const serialized = JSON.stringify(error);
+    if (serialized && serialized !== "{}") return serialized;
+  }
+  return "Error desconocido. Revisá la consola del servidor.";
+}
+
 function UsersPage() {
   const { user, loading, hasRole } = useAuth();
   if (loading) return <div className="p-10 text-center text-muted-foreground">Cargando…</div>;

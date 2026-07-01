@@ -5,9 +5,27 @@ import { z } from "zod";
 type AppRole = "admin" | "streamer" | "moderator";
 type AccountStatus = "pendiente" | "activo" | "suspendido" | "deshabilitado";
 
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const maybeMessage = "message" in error ? error.message : undefined;
+    if (typeof maybeMessage === "string" && maybeMessage.trim()) return maybeMessage;
+    const serialized = JSON.stringify(error);
+    if (serialized && serialized !== "{}") return serialized;
+  }
+  return "Error desconocido";
+}
+
+function throwSupabaseError(action: string, error: unknown): never {
+  throw new Error(`${action}: ${getErrorMessage(error)}`);
+}
+
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data: rolesRows } = await ctx.supabase
-    .from("user_roles").select("role").eq("user_id", ctx.userId);
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", ctx.userId);
   const roles = (rolesRows ?? []).map((r: { role: string }) => r.role);
   if (!roles.includes("admin")) throw new Error("Forbidden: admin only");
 }
@@ -26,9 +44,14 @@ async function audit(
 ) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   await supabaseAdmin.rpc("write_audit", {
-    _actor: actor, _action: action, _target_type: targetType,
-    _target_table: targetTable, _target_id: targetId as any,
-    _old: (oldValue ?? null) as any, _new: (newValue ?? null) as any, _metadata: {} as any,
+    _actor: actor,
+    _action: action,
+    _target_type: targetType,
+    _target_table: targetTable,
+    _target_id: targetId as any,
+    _old: (oldValue ?? null) as any,
+    _new: (newValue ?? null) as any,
+    _metadata: {} as any,
   });
 }
 
@@ -44,7 +67,9 @@ export const listUsers = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const ids = (profiles ?? []).map((p) => p.id);
     const { data: roleRows } = await supabaseAdmin
-      .from("user_roles").select("user_id, role").in("user_id", ids);
+      .from("user_roles")
+      .select("user_id, role")
+      .in("user_id", ids);
     const rolesByUser = new Map<string, AppRole[]>();
     (roleRows ?? []).forEach((r) => {
       const list = rolesByUser.get(r.user_id) ?? [];
@@ -54,7 +79,9 @@ export const listUsers = createServerFn({ method: "GET" })
     // Pull emails from auth
     const { data: usersList } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
     const emailById = new Map<string, string>();
-    usersList?.users.forEach((u) => { if (u.email) emailById.set(u.id, u.email); });
+    usersList?.users.forEach((u) => {
+      if (u.email) emailById.set(u.id, u.email);
+    });
     return (profiles ?? []).map((p) => ({
       id: p.id as string,
       username: p.username as string,
@@ -79,19 +106,39 @@ export const createUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
       email_confirm: true,
       user_metadata: { username: data.username, display_name: data.display_name ?? data.username },
     });
-    if (error) throw new Error(error.message);
-    const uid = created.user!.id;
-    if (data.role !== "streamer") {
-      await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
-    }
+    if (error) throwSupabaseError("No se pudo crear el usuario en Supabase Auth", error);
+
+    const uid = created.user?.id;
+    if (!uid) throw new Error("No se pudo crear el usuario: Supabase Auth no devolvió un ID.");
+
+    const displayName = data.display_name?.trim() || data.username;
+    const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
+      {
+        id: uid,
+        username: data.username,
+        display_name: displayName,
+        account_status: "activo",
+      },
+      { onConflict: "id" },
+    );
+    if (profileError) throwSupabaseError("No se pudo crear el perfil del usuario", profileError);
+
+    const { error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: uid, role: data.role }, { onConflict: "user_id,role" });
+    if (roleError) throwSupabaseError("No se pudo asignar el rol del usuario", roleError);
+
     await audit((context as any).userId, "user.create", "user", "auth.users", uid, null, {
-      email: data.email, username: data.username, role: data.role,
+      email: data.email,
+      username: data.username,
+      role: data.role,
     });
     return { id: uid };
   });
@@ -110,13 +157,22 @@ export const setUserRoles = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prev } = await supabaseAdmin
-      .from("user_roles").select("role").eq("user_id", data.user_id);
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user_id);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
-    await supabaseAdmin.from("user_roles").insert(
-      data.roles.map((r) => ({ user_id: data.user_id, role: r }))
+    await supabaseAdmin
+      .from("user_roles")
+      .insert(data.roles.map((r) => ({ user_id: data.user_id, role: r })));
+    await audit(
+      (context as any).userId,
+      "user.roles_change",
+      "user",
+      "user_roles",
+      data.user_id,
+      (prev ?? []).map((p) => p.role),
+      data.roles,
     );
-    await audit((context as any).userId, "user.roles_change", "user", "user_roles", data.user_id,
-      (prev ?? []).map((p) => p.role), data.roles);
     return { ok: true };
   });
 
@@ -134,16 +190,32 @@ export const setUserStatus = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prev } = await supabaseAdmin
-      .from("profiles").select("account_status").eq("id", data.user_id).single();
+      .from("profiles")
+      .select("account_status")
+      .eq("id", data.user_id)
+      .single();
     const { error } = await supabaseAdmin
-      .from("profiles").update({ account_status: data.status }).eq("id", data.user_id);
+      .from("profiles")
+      .update({ account_status: data.status })
+      .eq("id", data.user_id);
     if (error) throw new Error(error.message);
-    const action = data.status === "suspendido" ? "user.suspend"
-      : data.status === "activo" ? "user.activate"
-      : data.status === "deshabilitado" ? "user.disable"
-      : "user.status_change";
-    await audit((context as any).userId, action, "user", "profiles", data.user_id,
-      { account_status: prev?.account_status }, { account_status: data.status });
+    const action =
+      data.status === "suspendido"
+        ? "user.suspend"
+        : data.status === "activo"
+          ? "user.activate"
+          : data.status === "deshabilitado"
+            ? "user.disable"
+            : "user.status_change";
+    await audit(
+      (context as any).userId,
+      action,
+      "user",
+      "profiles",
+      data.user_id,
+      { account_status: prev?.account_status },
+      { account_status: data.status },
+    );
     return { ok: true };
   });
 
@@ -163,10 +235,25 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     if (data.display_name !== undefined) patch.display_name = data.display_name;
     if (Object.keys(patch).length === 0) return { ok: true };
     const { data: prev } = await supabaseAdmin
-      .from("profiles").select("username, display_name").eq("id", data.user_id).single();
+      .from("profiles")
+      .select("username, display_name")
+      .eq("id", data.user_id)
+      .single();
     const { data: after, error } = await supabaseAdmin
-      .from("profiles").update(patch).eq("id", data.user_id).select("username, display_name").single();
+      .from("profiles")
+      .update(patch)
+      .eq("id", data.user_id)
+      .select("username, display_name")
+      .single();
     if (error) throw new Error(error.message);
-    await audit((context as any).userId, "user.profile_update", "user", "profiles", data.user_id, prev, after);
+    await audit(
+      (context as any).userId,
+      "user.profile_update",
+      "user",
+      "profiles",
+      data.user_id,
+      prev,
+      after,
+    );
     return { ok: true };
   });
