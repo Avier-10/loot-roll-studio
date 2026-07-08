@@ -101,7 +101,7 @@ export function RoulettePage({ stream = false }: Props) {
       <main className={inStream ? "min-h-screen flex flex-col items-center justify-center px-4 py-6" : "max-w-7xl mx-auto px-4 py-8"}>
         <header className="text-center mb-8">
           <h1 className="font-display text-4xl sm:text-6xl font-bold text-gold tracking-widest">
-            LOOTSPIN
+            LOOTSPINnnnn
           </h1>
           {!inStream && (
             <p className="text-muted-foreground mt-2 text-sm uppercase tracking-[0.3em]">
