@@ -36,7 +36,7 @@ export function AppNav() {
     <header data-stream-hide className="sticky top-0 z-30 backdrop-blur bg-background/70 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
         <Link to="/" className="font-display text-xl font-bold text-gold tracking-widest">
-          LOOTSPIN
+          LOOTSPINnn
         </Link>
         <nav className="flex items-center gap-1 flex-wrap">
           {tabs.filter((t) => t.show).map((t) => (
